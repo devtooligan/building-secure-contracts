@@ -55,3 +55,56 @@ pub fn mint(
     // [...]
 }
 ```
+
+Let's say you have a simple "Swap" program that:
+
+- Takes in user's SOL
+- Mints them tokens in return
+- Needs to verify the SOL transfer happened
+
+```rust
+// Vulnerable pattern
+pub fn process_swap(ctx: Context<Swap>) -> Result<()> {
+    // Checks instruction at index 0 is a SOL transfer
+    let transfer_ix = solana_program::sysvar::instructions::load_instruction_at_checked(
+        0, // BAD: Absolute index
+        &ctx.accounts.instructions
+    )?;
+
+    if verify_sol_transfer(&transfer_ix) {
+        // Mint tokens to user...
+    }
+}
+```
+
+A user could create a transaction like:
+
+- Transfer SOL
+- Swap
+- Swap again (reuses same transfer verification)
+- Swap again (reuses same transfer verification)
+
+B) To detect this:
+
+Grep for these specific imports/uses:
+
+```rust
+solana_program::sysvar::instructions
+sysvar::instructions
+Instructions::load
+load_instruction_at
+```
+
+Look for patterns where code needs to verify "X happened before Y":
+Comments mentioning "must be called after"
+Functions that check token transfers
+Code that looks at transaction history
+
+
+Look for these account types in struct definitions:
+
+```rust
+sysvar::instructions::Instructions
+```
+
+The key is: anytime a program needs to verify "some other instruction happened", it needs to use relative instruction indexing or could be vulnerable.
