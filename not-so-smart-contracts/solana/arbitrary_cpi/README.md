@@ -40,7 +40,11 @@ _Inspired by [Sealevel](https://github.com/coral-xyz/sealevel-attacks/)_
 ## Mitigation
 
 ```rust
-        if INPUTTED_PROGRAM.key != &INTENDED_PROGRAM::id() {
+        if token_program.key != &HARDCODED_INTENDED_PROGRAM::id() {
             return Err(ProgramError::InvalidProgramId);
         }
 ```
+
+To find:
+
+search for: `invoke` and `invoke_signed` and confirm validation on program
